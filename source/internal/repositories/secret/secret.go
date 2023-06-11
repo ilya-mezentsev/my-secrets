@@ -36,3 +36,16 @@ func (r Repository) Fetch(key string) (string, error) {
 
 	return string(content), err
 }
+
+func (r Repository) Exists(key string) (bool, error) {
+	_, err := os.Stat(path.Join(r.basePath, key))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
+	return true, nil
+}

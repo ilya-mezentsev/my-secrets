@@ -41,6 +41,6 @@ func processCommand(args []string, commandsService commands.Service) {
 	if response.IsOk {
 		fmt.Println(response.Result)
 	} else {
-		fmt.Printf("Got error while processing command: %s\n", response.Result)
+		fmt.Printf("Error: %s\n", response.Result)
 	}
 }

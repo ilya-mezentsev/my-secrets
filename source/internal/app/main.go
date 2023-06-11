@@ -13,7 +13,10 @@ import (
 	"path"
 )
 
-var appDirPath string
+var (
+	appDirPath  string
+	secretsPath string
+)
 
 const appName = ".my-secrets"
 
@@ -26,14 +29,16 @@ func init() {
 	}
 
 	appDirPath = path.Join(userHomeDir, appName)
+	secretsPath = path.Join(appDirPath, "secrets")
 
-	ensureAppDirExists()
+	ensureDirExists(appDirPath)
+	ensureDirExists(secretsPath)
 	setupLogging()
 }
 
-func ensureAppDirExists() {
-	if _, err := os.Stat(appDirPath); errors.Is(err, os.ErrNotExist) {
-		err = os.Mkdir(appDirPath, os.ModePerm)
+func ensureDirExists(dirPath string) {
+	if _, err := os.Stat(dirPath); errors.Is(err, os.ErrNotExist) {
+		err = os.Mkdir(dirPath, os.ModePerm)
 		if err != nil {
 			fmt.Printf("Unable to create application directory: %v\n", err)
 			os.Exit(1)
@@ -50,7 +55,7 @@ func setupLogging() {
 
 func Main() {
 	commandsService := commands.New(
-		secret.New(appDirPath),
+		secret.New(secretsPath),
 		encrypt.New(),
 	)
 

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"my-secrets/internal/repositories/secret"
 	"my-secrets/internal/services/encrypt"
@@ -40,6 +41,23 @@ func (s Service) IsCommandValid(command string) bool {
 
 func (s Service) Get(key, password string) Response {
 	hashedKey := s.cipher.EncryptKey(key)
+	keyExists, err := s.secretsRepository.Exists(hashedKey)
+	if err != nil {
+		log.Errorf("Unable to read value for key: %s; got error: %v", key, err)
+
+		return Response{
+			IsOk:   false,
+			Result: "Got error while reading value.",
+		}
+	}
+
+	if !keyExists {
+		return Response{
+			IsOk:   false,
+			Result: fmt.Sprintf("Key '%s' is not found.", key),
+		}
+	}
+
 	value, err := s.secretsRepository.Fetch(hashedKey)
 	if err != nil {
 		log.Errorf("Unable to read value for key: %s; got error: %v", key, err)
