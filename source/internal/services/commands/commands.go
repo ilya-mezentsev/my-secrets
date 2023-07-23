@@ -19,13 +19,6 @@ type (
 	}
 )
 
-var (
-	availableCommands = map[string]struct{}{
-		"get": {},
-		"set": {},
-	}
-)
-
 func New(secretsRepository secret.IRepository, cipher encrypt.IService) Service {
 	return Service{
 		secretsRepository: secretsRepository,
@@ -33,13 +26,22 @@ func New(secretsRepository secret.IRepository, cipher encrypt.IService) Service 
 	}
 }
 
-func (s Service) IsCommandValid(command string) bool {
-	_, found := availableCommands[command]
+func (s Service) Do(command any, password string) Response {
+	switch command.(type) {
+	case GetCommand:
+		return s.get(command.(GetCommand), password)
 
-	return found
+	case SetCommand:
+		return s.set(command.(SetCommand), password)
+
+	default:
+		panic("internal error")
+	}
 }
 
-func (s Service) Get(key, password string) Response {
+func (s Service) get(command GetCommand, password string) Response {
+	key := command.key
+
 	hashedKey := s.cipher.EncryptKey(key)
 	keyExists, err := s.secretsRepository.Exists(hashedKey)
 	if err != nil {
@@ -84,7 +86,9 @@ func (s Service) Get(key, password string) Response {
 	}
 }
 
-func (s Service) Set(key, value, password string) Response {
+func (s Service) set(command SetCommand, password string) Response {
+	key, value := command.key, command.value
+
 	hashedKey := s.cipher.EncryptKey(key)
 	encryptedValue, err := s.cipher.EncryptValue(value, password)
 	if err != nil {
